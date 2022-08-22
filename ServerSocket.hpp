@@ -8,17 +8,18 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <vector>
 
-class Socket {
+class SeverSocket {
     private:
         struct addrinfo *address_info;
         int socket_fd;
     public:
-        Socket(const char *port);
-        char* getIP(char* url);
+        std::vector<int> clients = {};
+        ServerSocket(const char *port);
         int bindSocket();
         int listenSocket();
-        int connectSocket(char *url, char *port);
+        int acceptSocket();
 };
 
 #endif
