@@ -1,6 +1,6 @@
 #include "httpSocket.hpp"
 
-HTTP_Socket::HTTP_Socket(const char *port) {
+Socket::Socket(const char *port) {
     struct addrinfo hints;
 
     memset(&hints, 0, sizeof hints);
@@ -33,14 +33,38 @@ int HTTP_Socket::bindSocket() {
     return socket_bind; 
 }
 
-int HTTP_Socket::listenSocket() {
+int Socket::listenSocket() {
     int socket_listen = listen(socket_fd, BACK_LOG);
     if (socket_listen < 0)
         throw std::runtime_error("Listen failed!");
     return socket_listen; 
 }
 
-char* HTTP_Socket::getIP(char* url) {
+int Socket::connectSocket(char *url, char* port) {
+    struct addrinfo hints, *result;
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    int status = getaddrinfo(url, port, &hints, &result);
+    if (status != 0) {
+        throw std::runtime_error(gai_strerror(status));
+    }
+
+    int socket_connect = connect(
+        socket_fd,
+        result->ai_addr,
+        result->ai_addrlen
+    );
+
+    if (socket_connect < 0)
+        throw std::runtime_error("Connect failed!");
+
+    return socket_connect;
+}
+
+char* Socket::getIP(char* url) {
     struct addrinfo hints, *result;
 
     memset(&hints, 0, sizeof hints);

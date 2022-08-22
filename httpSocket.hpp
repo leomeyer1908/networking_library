@@ -9,15 +9,16 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-class HTTP_Socket {
+class Socket {
     private:
         struct addrinfo *address_info;
         int socket_fd;
     public:
-        HTTP_Socket(const char *port);
+        Socket(const char *port);
         char* getIP(char* url);
         int bindSocket();
         int listenSocket();
+        int connectSocket(char *url, char *port);
 };
 
 #endif
