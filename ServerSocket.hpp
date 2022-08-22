@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <vector>
 
-class SeverSocket {
+class ServerSocket {
     private:
         struct addrinfo *address_info;
         int socket_fd;
