@@ -23,7 +23,7 @@ class ServerSocket {
         int listenSocket();
         int acceptSocket();
         int sendData(int client_fd, char *data, int data_size);
-        int recvData(int client_fd);
+        int recvData(int client_fd, char *buffer, int buffer_size);
 };
 
 #endif

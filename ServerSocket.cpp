@@ -30,6 +30,19 @@ ServerSocket::~ServerSocket() {
 }
 
 int ServerSocket::bindSocket() {
+    //makes socket be able to bind to port if it had binded to it before
+    int yes = 1;
+    int status = setsockopt(
+        socket_fd,
+        SOL_SOCKET,
+        SO_REUSEADDR,
+        &yes,
+        sizeof(int)
+    );
+    if (status == -1) {
+        perror("setsockopt");
+        exit(1); 
+    }
     int socket_bind = bind(
         socket_fd,
         address_info->ai_addr,
@@ -66,9 +79,8 @@ int ServerSocket::sendData(int client_fd, char *data, int data_size) {
     bytes_sent = send(client_fd, data, data_size, 0);
 }
 
-int ServerSocket::recvData(int client_fd) {
-    char msg[100];
-    int status = recv(client_fd, &msg, 100, 0);
+int ServerSocket::recvData(int client_fd, char *buffer, int buffer_size) {
+    int status = recv(client_fd, buffer, buffer_size, 0);
     if (status == -1)
         throw std::runtime_error("Receive message failed!");
     else if (status == 0) {
