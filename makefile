@@ -1,8 +1,8 @@
-prog: main.o ServerSocket.o
-	g++ main.o ServerSocket.o -o server
+prog: server.o ServerSocket.o
+	g++ server.o ServerSocket.o -o server
 
-main.o: main.cpp
-	g++ -std=c++11 -c main.cpp
+server.o: server.cpp
+	g++ -std=c++11 -c server.cpp
 
 ServerSocket.o: ServerSocket.cpp ServerSocket.hpp
 	g++ -std=c++11 -c ServerSocket.cpp
