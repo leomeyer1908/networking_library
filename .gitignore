@@ -1,5 +1,8 @@
 .DS_Store
 .vscode
 *.o
-prog
 a.out
+client.cpp
+server.cpp
+client
+server
