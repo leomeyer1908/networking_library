@@ -1,6 +1,6 @@
 #define BACK_LOG 20
-#ifndef http_socket_hpp
-#define http_socket_hpp
+#ifndef server_socket_hpp
+#define server_socket_hpp
 #include <cstring>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -9,17 +9,21 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <vector>
+#include <unistd.h>
 
 class ServerSocket {
     private:
         struct addrinfo *address_info;
         int socket_fd;
     public:
-        std::vector<int> clients = {};
+        std::vector<int> client_sockets = {};
         ServerSocket(const char *port);
+        ~ServerSocket();
         int bindSocket();
         int listenSocket();
         int acceptSocket();
+        int sendData(int client_fd, char *data, int data_size);
+        int recvData(int client_fd);
 };
 
 #endif

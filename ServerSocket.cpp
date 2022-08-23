@@ -22,6 +22,13 @@ ServerSocket::ServerSocket(const char *port) {
         throw std::runtime_error("Socket not open"); 
 }
 
+ServerSocket::~ServerSocket() {
+    close(socket_fd);
+    for (int i = 0; i < client_sockets.size(); i++) {
+        close(client_sockets[i]);
+    }
+}
+
 int ServerSocket::bindSocket() {
     int socket_bind = bind(
         socket_fd,
@@ -48,10 +55,30 @@ int ServerSocket::acceptSocket() {
         (struct sockaddr *) &client_addr,
         &client_addr_size
     );
-    if (client_socket_fd < 0)
-        throw std::runtime_error("Client socket not open"); 
-    
+    if (client_socket_fd != -1)
+        client_sockets.push_back(client_socket_fd);
+    return client_socket_fd;
+}
 
+int ServerSocket::sendData(int client_fd, char *data, int data_size) {
+    int bytes_sent;
+    //make a while loop to make sure all the data is sent
+    bytes_sent = send(client_fd, data, data_size, 0);
+}
+
+int ServerSocket::recvData(int client_fd) {
+    char msg[100];
+    int status = recv(client_fd, &msg, 100, 0);
+    if (status == -1)
+        throw std::runtime_error("Receive message failed!");
+    else if (status == 0) {
+        close(client_fd);
+        for (int i = 0; i < client_sockets.size(); i++) {
+            if (client_sockets.at(i) == client_fd)
+                client_sockets.erase(client_sockets.begin()+i);
+        }
+    }
+    return status;
 }
 
 // int Socket::connectSocket(char *url, char* port) {
