@@ -23,6 +23,7 @@ ServerSocket::ServerSocket(const char *port) {
 }
 
 ServerSocket::~ServerSocket() {
+    freeaddrinfo(address_info);
     close(socket_fd);
     for (int i = 0; i < client_sockets.size(); i++) {
         close(client_sockets[i]);
@@ -75,22 +76,30 @@ int ServerSocket::acceptSocket() {
 
 int ServerSocket::sendData(int client_fd, char *data, int data_size) {
     int bytes_sent;
-    //make a while loop to make sure all the data is sent
-    bytes_sent = send(client_fd, data, data_size, 0);
+    int total_size = data_size;
+    while (data_size) {
+        bytes_sent = send(client_fd, data, data_size, 0);
+        if (bytes_sent == -1) {
+            return -1;
+        }
+        data += bytes_sent;
+        data_size -= bytes_sent;
+    }
+    return total_size;
 }
 
 int ServerSocket::recvData(int client_fd, char *buffer, int buffer_size) {
-    int status = recv(client_fd, buffer, buffer_size, 0);
-    if (status == -1)
+    int bytes_recv = recv(client_fd, buffer, buffer_size, 0);
+    if (bytes_recv == -1)
         throw std::runtime_error("Receive message failed!");
-    else if (status == 0) {
+    else if (bytes_recv == 0) {
         close(client_fd);
         for (int i = 0; i < client_sockets.size(); i++) {
             if (client_sockets.at(i) == client_fd)
                 client_sockets.erase(client_sockets.begin()+i);
         }
     }
-    return status;
+    return bytes_recv;
 }
 
 // int Socket::connectSocket(char *url, char* port) {
