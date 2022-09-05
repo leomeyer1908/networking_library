@@ -150,7 +150,18 @@ HTTP_Server::HTTP_Server(const char *port, char* html, int html_size) {
                     decode_uri(request_uri, request_uri_size, decoded_uri);
 
                     /*HTTP-VERSION*/
-                    
+                    char* HTTP_version = request_uri+request_uri_size+1;
+                    int HTTP_version_size = 0;
+                    for (char* ptr = HTTP_version; ptr < buf + sizeof(buf); ptr++) {
+                        if (*ptr == '\r') {
+                            if (*(ptr+1) == '\n') {
+                                //if it does not have a CRLF then do error
+                                break;
+                            }
+                            //GIVE ERROR
+                        }
+                        HTTP_version_size++;
+                    }
 
 
 
