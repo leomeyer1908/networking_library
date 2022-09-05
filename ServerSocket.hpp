@@ -14,8 +14,8 @@
 class ServerSocket {
     private:
         struct addrinfo *address_info;
-        int socket_fd;
     public:
+        int socket_fd;
         std::vector<int> client_sockets = {};
         ServerSocket(const char *port);
         ~ServerSocket();
