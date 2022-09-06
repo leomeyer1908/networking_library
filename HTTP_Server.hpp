@@ -6,9 +6,11 @@
 
 class HTTP_Server {
     private:
+        bool is_simple_request;
         char buf[BUFFER_SIZE];
+        void evaluate_request(char* buf);
     public:
-        HTTP_Server(const char *port, char* html, int html_size);
+        HTTP_Server(const char *port, char* path, int path_size);
 };
 
 #endif
