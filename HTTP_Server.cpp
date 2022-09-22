@@ -1,6 +1,45 @@
 #include "HTTP_Server.hpp"
 
+int get_method_int(char* method, int method_size) {
+    const char GET[] = "GET";
+    const char HEAD[] = "HEAD";
+    const char POST[] = "POST";
+    const char* methods[3] = {GET, HEAD, POST};
+    int method = -1; //GET = 0, HEAD = 1, POST = 2; NONE = -1
+    bool is_same_str;
+    for (int i = 0; i < 3; i++) {
+        is_same_str = true;
+        for (int j = 0; j < method_size; j++) {
+            if (methods[i][j] != method[j]) {
+                is_same_str = false;
+                break;
+            }
+        }
+        if (is_same_str) {
+            return i;
+        }
+    }
+    //SEND OUT STATUS CODE 501 FOR method = -1
+}
 
+
+void get_entity(char* resource_uri, const char* entity) {
+    const std::string RESOURCE_DIR = std::string("resources/") + resource_uri;
+    std::string file_string;
+    std::string buf;
+    std::ifstream file;
+    file.open(RESOURCE_DIR.c_str());
+    if (file.is_open()) {
+        while (file) {
+            std::getline(file, buf);
+            file_string += buf + "\n";
+        }
+        entity = file_string.c_str();
+        file.close();
+    } else {
+        //error
+    }
+}
 
 //I PROBABLY DONT NEED STATUS_CLASS SINCE THIS WILL LIKELY ONLY BE USED
 //FOR SERVER TO GENERATE REASON PHRASE, SO IT WILL ALWAYS KNOW THE CORRECT ONE
@@ -143,13 +182,39 @@ HTTP_Server::HTTP_Server(const char *port, char* path, int path_size) {
                         i--;
                         continue;
                     }
-                    evaluate_request(buf);
-                    
+                    struct full_request request;
+                    evaluate_request(buf, &request);
+                    int method = get_method_int(
+                        request.request_line.method,
+                        request.request_line.method_size
+                    );
 
                     /*GENERATE RESPONSE*/
-                    if (!is_simple_request) {
-                        char status_line[] = "HTTP/1.0 200";
+                    if (request.request_line.http_version == "HTTP/0.9") {
+                        if (method == 0) {
+                            //simple request
+                            return;
+                        }
+                        //ERROR
                     }
+                    char status_line[] = "HTTP/1.0 200";
+                    
+                    if (method == 0) { //GET
+                        //NORMAL GET
+                        const char* entity;
+                        get_entity(request.request_line.request_uri, entity);
+
+                        //CONDITIONAL GET
+                    } else if (method == 1) { //HEAD
+                        //HEAD
+                        
+                        //IGNORE CONDITIONAL HEAD
+                    } else if (method == 2) { //POST
+                        //POST
+                    } else {
+                        //ERROR INVALID METHOD
+                    }
+
                     
 
 
@@ -158,6 +223,9 @@ HTTP_Server::HTTP_Server(const char *port, char* path, int path_size) {
                     //GENERAL HEADER
                     //RESPONSE HEADER
                     //ENTITY HEADER
+
+
+
                     //ENTITY BODY
 
 
@@ -179,40 +247,18 @@ HTTP_Server::HTTP_Server(const char *port, char* path, int path_size) {
     }
 }
 
-void HTTP_Server::evaluate_request(char* buf) {
-    const char GET[] = "GET";
-    const char HEAD[] = "HEAD";
-    const char POST[] = "POST";
-    const char* methods[3] = {GET, HEAD, POST};
-    int method = -1; //GET = 0, HEAD = 1, POST = 2; NONE = -1
+void HTTP_Server::evaluate_request(char* buf, struct full_request* request) {
     /*METHOD*/
-    char* request_method = buf;
-    int request_method_size = 0;
+    request->request_line.method = buf;
+    request->request_line.method_size = 0;
     for (char* ptr = buf; ptr < buf + sizeof(buf); ptr++) {
         if (*ptr == ' ') {
             break;
         }
-        request_method_size++;
-    }
-    bool is_same_str;
-    for (int i = 0; i < 3; i++) {
-        is_same_str = true;
-        for (int j = 0; j < request_method_size; j++) {
-            if (methods[i][j] != request_method[j]) {
-                is_same_str = false;
-                break;
-            }
-        }
-        if (is_same_str) {
-            method = i;
-            break;
-        }
-    }
-    if (method == -1) {
-        //SEND OUT STATUS CODE 501
+        request->request_line.method_size++;
     }
     /*REQUEST-URI*/
-    char* request_uri = (buf+request_method_size+1);
+    char* request_uri = (buf+request->request_line.method_size+1);
     int request_uri_size = 0;
     int escape_codes_num = 0;
     for (char* ptr = request_uri; ptr < buf + sizeof(buf); ptr++) {
@@ -221,12 +267,9 @@ void HTTP_Server::evaluate_request(char* buf) {
         }
         if (*ptr == '\r') {
             if (*(ptr+1) == '\n') {
-                if (method == 0) {
-                    is_simple_request = true;
-                    break;
-                }
-                //INVALID REQUEST, DO SOMETHING HERE
-                break;
+                request->request_line.http_version = "HTTP/0.9";
+                request->request_line.http_version_size = 9;
+                return;
             }
             //INVALID REQUEST, DO SOMETHING HERE
         }
