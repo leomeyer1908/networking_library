@@ -22,13 +22,16 @@ int get_method_int(char* method, int method_size) {
     //SEND OUT STATUS CODE 501 FOR method = -1
 }
 
-
-void get_entity(char* resource_uri, const char* entity) {
-    const std::string RESOURCE_DIR = std::string("resources/") + resource_uri;
+//Returns size of entity
+int get_entity(char* resource_uri, const char* entity) {
+    std::string resource_dir = std::string("resources/") + resource_uri;
+    if (resource_dir[resource_dir.size()-1] == '/') {
+        resource_dir += "index.html";
+    }
     std::string file_string;
     std::string buf;
     std::ifstream file;
-    file.open(RESOURCE_DIR.c_str());
+    file.open(resource_dir.c_str());
     if (file.is_open()) {
         while (file) {
             std::getline(file, buf);
@@ -36,8 +39,10 @@ void get_entity(char* resource_uri, const char* entity) {
         }
         entity = file_string.c_str();
         file.close();
+        return file_string.size() + 1;
     } else {
         //error
+        return -1;
     }
 }
 
@@ -178,6 +183,7 @@ HTTP_Server::HTTP_Server(const char *port, char* path, int path_size) {
                     memset(buf, 0, sizeof buf);
                     int bytes_recv = server.recvData(poll_fds[i].fd, buf, sizeof buf);
                     if (bytes_recv == 0) {
+                        server.closeClientSocket(poll_fds[i].fd);
                         poll_fds.erase(poll_fds.begin()+i);
                         i--;
                         continue;
@@ -190,20 +196,32 @@ HTTP_Server::HTTP_Server(const char *port, char* path, int path_size) {
                     );
 
                     /*GENERATE RESPONSE*/
+                    //SIMPLE RESPONSE
                     if (request.request_line.http_version == "HTTP/0.9") {
                         if (method == 0) {
-                            //simple request
-                            return;
+                            const char* entity;
+                            int entity_size = get_entity(
+                                request.request_line.request_uri, entity
+                            );
+                            server.sendData(
+                                poll_fds[i].fd, (char*) entity, entity_size
+                            );
+                            server.closeClientSocket(poll_fds[i].fd);
+                            poll_fds.erase(poll_fds.begin()+i);
+                            i--;
+                            continue;
                         }
                         //ERROR
                     }
+                    //FULL RESPONSE
                     char status_line[] = "HTTP/1.0 200";
                     
                     if (method == 0) { //GET
                         //NORMAL GET
                         const char* entity;
-                        get_entity(request.request_line.request_uri, entity);
-
+                        int entity_size = get_entity(
+                            request.request_line.request_uri, entity
+                        );
                         //CONDITIONAL GET
                     } else if (method == 1) { //HEAD
                         //HEAD
