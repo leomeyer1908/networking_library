@@ -24,6 +24,7 @@ class ServerSocket {
         int acceptSocket();
         int sendData(int client_fd, char *data, int data_size);
         int recvData(int client_fd, char *buffer, int buffer_size);
+        int closeClientSocket(int client_fd);
 };
 
 #endif

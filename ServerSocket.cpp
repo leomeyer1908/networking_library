@@ -93,13 +93,19 @@ int ServerSocket::recvData(int client_fd, char *buffer, int buffer_size) {
     if (bytes_recv == -1)
         throw std::runtime_error("Receive message failed!");
     else if (bytes_recv == 0) {
-        close(client_fd);
-        for (int i = 0; i < client_sockets.size(); i++) {
-            if (client_sockets.at(i) == client_fd)
-                client_sockets.erase(client_sockets.begin()+i);
-        }
+        closeClientSocket(client_fd);
     }
     return bytes_recv;
+}
+
+int ServerSocket::closeClientSocket(int client_fd) {
+    close(client_fd);
+    for (int i = 0; i < client_sockets.size(); i++) {
+        if (client_sockets[i] == client_fd) {
+            client_sockets.erase(client_sockets.begin()+i);
+            break;
+        }
+    }
 }
 
 // int Socket::connectSocket(char *url, char* port) {
